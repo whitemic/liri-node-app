@@ -7,11 +7,19 @@ var request = require("request");
 var fs = require("fs");
 var dataArray = [];
 var readCommand = false;
+var noInput = "";
 
 var spotify = new Spotify(keys.spotify);
 var client = new Twitter(keys.twitter);
 
+if (process.argv.length > 3) {
+    noInput = false;
+} else {
+    noInput = true;
+}
+
 var command = process.argv[2];
+var term = process.argv.splice(3).join(" ");
 
 function getTweets() {
     var params = {screen_name: 'PennytheB'};
@@ -68,6 +76,7 @@ function readFile() {
             console.log(err);
         }
         dataArray = data.split(",")
+        console.log(dataArray);
         liri(dataArray[0], dataArray[1]);
     });
 }
@@ -77,25 +86,30 @@ function liri(command, searchTerm) {
         getTweets();
     } else {
         if (command === "spotify-this-song") {
-            if (process.argv.length === 3 && !readCommand) {
+            if (noInput && !readCommand) {
                 spotifySearch("The Sign Ace of Base");
             } else {
-                if (readCommand) {
-                    spotifySearch(searchTerm);
+                if (noInput && readCommand) {
+                    spotifySearch(searchTerm)
                 } else {
-                    spotifySearch(process.argv[3]);
+                    if (!noInput && readCommand) {
+                        spotifySearch(searchTerm);
+                    } else {
+                        spotifySearch(term);
+                    }
                 }
             }
         } else {
             if (command === "movie-this") {
-                if (process.argv.length === 3 && !readCommand) {
+                if (noInput && !readCommand) {
                     process.argv.push("Mr. Nobody");
                     movieSearch(process.argv[3]);
-                }
-                if (readCommand) {
-                    movieSearch(searchTerm);
                 } else {
-                    movieSearch(process.argv[3]);
+                    if (!noInput && readCommand) {
+                        movieSearch(searchTerm);
+                    } else {
+                        movieSearch(term);
+                    }
                 }
 
             } else {
