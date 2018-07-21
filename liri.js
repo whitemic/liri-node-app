@@ -3,11 +3,30 @@ require("dotenv").config();
 var keys = require("./keys.js");
 var Spotify = require("node-spotify-api");
 var Twitter = require("twitter");
+var request = require("request");
+var fs = require("fs");
+var dataArray = [];
+var readCommand = false;
 
 var spotify = new Spotify(keys.spotify);
 var client = new Twitter(keys.twitter);
 
 var command = process.argv[2];
+
+function getTweets() {
+    var params = {screen_name: 'PennytheB'};
+    client.get('statuses/user_timeline', params, function(error, tweets, response) {
+        if (error) {
+            console.log(error);
+        }
+        for (var i = 0; i < 10; i++) {
+            console.log("---------------------")
+            console.log("Tweet content: " + tweets[i].text)
+            console.log("Created at: " + tweets[i].created_at)
+            console.log("---------------------")
+        };
+    });
+}
 
 function spotifySearch(query) {
     spotify.search({ type: 'track', query: query }, function(err, data) {
@@ -24,41 +43,72 @@ function spotifySearch(query) {
         });
 }
 
-// function makeSearchTerm() {
-//     console.log("made it here");
-//     var searchTerm = "";
-//     console.log(process.argv.length);
-//     for (var i = 2; process.argv.length; i++) {
-//         console.log("made it here");
-//         searchTerm += process.argv[i];
-//     }
-//     console.log(searchTerm);
-// }
-
-if (command === "my-tweets") {
-    console.log("hi");
-    var params = {screen_name: 'PennytheB'};
-    client.get('statuses/user_timeline', params, function(error, tweets, response) {
-
-        if (error) {
-            console.log(error);
+function movieSearch(query) {
+    request("http://www.omdbapi.com/?t=" + query + "&y=&plot=short&apikey=trilogy", function(error, response, body) {
+        if (!error && response.statusCode === 200) {
+            var root = JSON.parse(body);
+            console.log("------------------");
+            console.log("Title of Movie: " + root.Title);
+            console.log("Year of Release: " + root.Year);
+            console.log("IMDB Rating: " + root.imdbRating);
+            //Work in logic for when there is no data for this
+            console.log("Rotten Tomatoes Rating: " + root.Ratings[1].Value);
+            console.log("Country Where Produced: " + root.Country);
+            console.log("Language of Movie: " + root.Language);
+            console.log("Plot of Movie: " + root.Plot);
+            console.log("Actors in Movie: " + root.Actors);
+            console.log("------------------");
         }
-        // console.log(tweets);
-        for (var i = 0; i < 10; i++) {
-            console.log("---------------------")
-            console.log("Tweet content: " + tweets[i].text)
-            console.log("Created at: " + tweets[i].created_at)
-            console.log("---------------------")
-        }
-;
     });
-} else {
-    if (command === "spotify-this-song") {
-        if (process.argv.length === 3) {
-            spotifySearch("The Sign Ace of Base");
-        } else {
-            spotifySearch(process.argv[3]);
+}
+
+function readFile() {
+    fs.readFile("random.txt", "utf8", function(err, data) {
+        if (err) {
+            console.log(err);
         }
+        dataArray = data.split(",")
+        liri(dataArray[0], dataArray[1]);
+    });
+}
+
+function liri(command, searchTerm) {
+    if (command === "my-tweets") {
+        getTweets();
+    } else {
+        if (command === "spotify-this-song") {
+            if (process.argv.length === 3 && !readCommand) {
+                spotifySearch("The Sign Ace of Base");
+            } else {
+                if (readCommand) {
+                    spotifySearch(searchTerm);
+                } else {
+                    spotifySearch(process.argv[3]);
+                }
+            }
+        } else {
+            if (command === "movie-this") {
+                if (process.argv.length === 3 && !readCommand) {
+                    process.argv.push("Mr. Nobody");
+                    movieSearch(process.argv[3]);
+                }
+                if (readCommand) {
+                    movieSearch(searchTerm);
+                } else {
+                    movieSearch(process.argv[3]);
+                }
+
+            } else {
+                if (command === "do-what-it-says") {
+                    readCommand = true;
+                    readFile();            
+                }
+            }
+        }
+    
     }
 
-} 
+}
+
+ 
+liri(command);

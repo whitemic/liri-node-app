@@ -1,1 +1,2 @@
 # liri-node-app
+This application is a language input recognition interface. A user can input a one of four commands - "my-tweets", "spotify-this-song", "movie-this", or "do-what-it-says" in the command line. There is a default search for a song and a movie if no further search term is inputed after the command. With these commands, a user can load tweets, get song infromation, get movie information or read a file to carry out any of the commands specified in it. 
